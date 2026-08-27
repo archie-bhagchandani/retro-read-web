@@ -1,43 +1,132 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, AtSign, Eye, EyeOff, BookOpen, Sparkles, ArrowRight, CheckCircle, Store } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, BookOpen, Sparkles, ArrowRight, Phone, UserCircle } from 'lucide-react';
+
+const quote = { text: "Books are a uniquely portable magic.", author: "Stephen King" };
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', email: '', username: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    username: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [focused, setFocused] = useState(null);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [userType, setUserType] = useState('reader');
+  const [error, setError] = useState('');
+  const [agree, setAgree] = useState(false);
 
   React.useEffect(() => { setMounted(true); }, []);
 
+
+  const validateFullName = (name) => {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    return nameRegex.test(name);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateUsername = (username) => {
+    const usernameRegex = /^[A-Za-z0-9_]{3,20}$/;
+    return usernameRegex.test(username);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validatePassword = (password) => {
+    // Minimum 7 characters, at least one uppercase, one lowercase, one number, one special character
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Save user data
-    localStorage.setItem('userType', userType);
-    localStorage.setItem('userEmail', formData.email);
-    localStorage.setItem('userName', formData.name);
+    setError('');
+
+   
+    if (!formData.fullName.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+    if (!validateFullName(formData.fullName)) {
+      setError('Full name should only contain letters and spaces');
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address (e.g., name@example.com)');
+      return;
+    }
+
+    if (!formData.username.trim()) {
+      setError('Please enter a username');
+      return;
+    }
+    if (!validateUsername(formData.username)) {
+      setError('Username must be 3-20 characters and can only contain letters, numbers, and underscores');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setError('Please enter your phone number');
+      return;
+    }
+    if (!validatePhone(formData.phone)) {
+      setError('Phone number must be exactly 10 digits (numbers only)');
+      return;
+    }
+
+    if (!formData.password) {
+      setError('Please create a password');
+      return;
+    }
+    if (!validatePassword(formData.password)) {
+      setError('Password must be at least 7 characters and include: one uppercase, one lowercase, one number, and one special character (@$!%*?&)');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (!agree) {
+      setError('Please agree to the Terms of Service and Privacy Policy');
+      return;
+    }
+
+    setError('');
+
+    localStorage.setItem('token', 'dummy-token-' + Date.now());
+    localStorage.setItem('userRole', 'user');
     localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userEmail', formData.email);
+    localStorage.setItem('userName', formData.fullName);
+    localStorage.setItem('userPhone', formData.phone);
     
-    // Navigate to login page
-    navigate('/login');
+    console.log('✅ Registration Successful!');
+    console.log('👤 Name:', formData.fullName);
+    console.log('📧 Email:', formData.email);
+    console.log('👤 Username:', formData.username);
+    console.log('📱 Phone:', formData.phone);
+    
+    navigate('/dashboard');
   };
-
-  const checkPasswordStrength = (pass) => {
-    let strength = 0;
-    if (pass.length >= 8) strength++;
-    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) strength++;
-    if (/\d/.test(pass)) strength++;
-    if (/[^a-zA-Z0-9]/.test(pass)) strength++;
-    setPasswordStrength(strength);
-  };
-
-  const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
-  const strengthColors = ['#E17055', '#FDCB6E', '#00B894', '#0984E3'];
-  const strengthWidths = ['25%', '50%', '75%', '100%'];
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center px-4 py-10 overflow-hidden">
@@ -54,11 +143,6 @@ const RegisterPage = () => {
         .seal-btn { position: relative; overflow: hidden; cursor: pointer; }
         .seal-btn::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent); transform: translateX(-120%) skewX(-15deg); transition: transform 0.6s ease; }
         .seal-btn:hover::after { animation: shimmer-sweep 0.9s ease forwards; }
-
-        @keyframes slide-up { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
-        .slide-up { animation: slide-up 0.5s ease forwards; opacity: 0; }
-
-        .input-group { margin-bottom: 18px; }
 
         .input-field {
           display: flex;
@@ -105,21 +189,6 @@ const RegisterPage = () => {
           cursor: pointer;
         }
         .input-field .toggle-btn:hover { color: #D8472F; }
-        .input-field .check-icon { padding-right: 16px; flex-shrink: 0; color: #00B894; }
-
-        .social-btn {
-          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-          background: rgba(255,255,255,0.4);
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(255,255,255,0.5);
-          height: 46px;
-          border-radius: 14px;
-        }
-        .social-btn:hover {
-          transform: translateY(-3px) scale(1.02);
-          background: rgba(255,255,255,0.7);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-        }
 
         .glass-card {
           background: rgba(255,251,243,0.78);
@@ -127,67 +196,28 @@ const RegisterPage = () => {
           border: 1px solid rgba(255,255,255,0.5);
           box-shadow: 0 40px 80px -30px rgba(30,42,66,0.4), inset 0 1px 0 rgba(255,255,255,0.6);
           border-radius: 32px;
-          max-width: 420px;
+          max-width: 480px;
           width: 100%;
         }
 
-        .divider-line {
-          flex: 1;
-          height: 1px;
-          background: linear-gradient(to right, transparent, rgba(217,199,163,0.4), transparent);
+        .btn-submit { height: 52px; border-radius: 14px; font-size: 15px; font-weight: 600; margin-top: 8px; }
+        
+        .error-message {
+          background: rgba(225,112,85,0.1);
+          border: 1px solid #E17055;
+          color: #E17055;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          margin-bottom: 12px;
         }
 
-        .btn-submit {
-          height: 52px;
-          border-radius: 14px;
-          font-size: 15px;
-          font-weight: 600;
+        .password-hint {
+          font-size: 11px;
+          color: #8A7F6B;
+          padding: 4px 14px;
           margin-top: 4px;
         }
-
-        .strength-bar {
-          height: 3px;
-          border-radius: 4px;
-          background: #EDE2CE;
-          overflow: hidden;
-          transition: all 0.3s ease;
-          margin-top: 6px;
-        }
-        .strength-bar .fill {
-          height: 100%;
-          border-radius: 4px;
-          transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .role-selector {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-        .role-option {
-          padding: 14px 10px;
-          border-radius: 14px;
-          border: 2px solid rgba(255,255,255,0.3);
-          background: rgba(255,255,255,0.15);
-          text-align: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .role-option:hover { transform: translateY(-2px); }
-        .role-option.active {
-          border-color: #D8472F;
-          background: rgba(216,71,47,0.08);
-          box-shadow: 0 4px 16px rgba(216,71,47,0.1);
-        }
-        .role-option.seller.active {
-          border-color: #6B4C82;
-          background: rgba(107,76,130,0.08);
-          box-shadow: 0 4px 16px rgba(107,76,130,0.1);
-        }
-        .role-option .role-icon { font-size: 28px; display: block; margin-bottom: 4px; }
-        .role-option .role-label { font-size: 14px; font-weight: 600; color: #1E2A42; }
-        .role-option .role-desc { font-size: 10px; color: #8A7F6B; }
       `}</style>
 
       <img
@@ -197,6 +227,7 @@ const RegisterPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#F6EFE3]/60 via-[#F6EFE3]/40 to-[#3A2A18]/50" />
 
+      {/* Register Card */}
       <div className={`glass-card p-8 md:p-10 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Logo */}
         <div className="flex flex-col items-center text-center mb-6">
@@ -207,55 +238,47 @@ const RegisterPage = () => {
             </div>
           </div>
           <span className="font-display font-semibold text-xl text-[#1E2A42] tracking-wide mt-3">RetroRead</span>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D8472F]/20 bg-white/40 px-3 py-1 text-[10px] tracking-wide text-[#5B6478] mt-2">
+            <Sparkles size={11} className="text-[#D8472F]" /> A new line, every visit
+          </div>
         </div>
 
         <h2 className="font-display text-2xl font-bold text-[#1E2A42] text-center">Create Account</h2>
         <p className="text-[#5B6478] text-sm mt-1.5 mb-6 text-center">Choose your role and start your journey.</p>
 
-        {/* Role Selector */}
-        <div className="role-selector">
-          <div
-            className={`role-option ${userType === 'reader' ? 'active' : ''}`}
-            onClick={() => setUserType('reader')}
-          >
-            <span className="role-icon">📖</span>
-            <span className="role-label">Reader</span>
-            <span className="role-desc">Read &amp; Exchange Books</span>
-          </div>
-          <div
-            className={`role-option seller ${userType === 'seller' ? 'active' : ''}`}
-            onClick={() => setUserType('seller')}
-          >
-            <span className="role-icon">🏪</span>
-            <span className="role-label">Seller</span>
-            <span className="role-desc">Sell Your Books</span>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit}>
-          {/* Name */}
-          <div className="input-group">
-            <div className={`input-field ${focused === 'name' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
+          {/* Error Message */}
+          {error && (
+            <div className="error-message">
+               {error}
+            </div>
+          )}
+
+          <div className="mb-4">
+            <div className={`input-field ${focused === 'fullName' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <User size={18} className="icon" />
               <input
                 type="text"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                onFocus={() => setFocused('name')}
+                placeholder="Full Name (Letters only)"
+                value={formData.fullName}
+                onChange={(e) => {
+                  // Only allow letters and spaces
+                  const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                  setFormData({ ...formData, fullName: value });
+                }}
+                onFocus={() => setFocused('fullName')}
                 onBlur={() => setFocused(null)}
                 required
               />
             </div>
           </div>
 
-          {/* Email */}
-          <div className="input-group">
+          <div className="mb-4">
             <div className={`input-field ${focused === 'email' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Mail size={18} className="icon" />
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="Email Address"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 onFocus={() => setFocused('email')}
@@ -265,15 +288,18 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          {/* Username */}
-          <div className="input-group">
+          <div className="mb-4">
             <div className={`input-field ${focused === 'username' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
-              <AtSign size={18} className="icon" />
+              <UserCircle size={18} className="icon" />
               <input
                 type="text"
-                placeholder="Username"
+                placeholder="Username (3-20 characters, letters/numbers/_)"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) => {
+                  // Only allow letters, numbers, underscores
+                  const value = e.target.value.replace(/[^A-Za-z0-9_]/g, '');
+                  setFormData({ ...formData, username: value });
+                }}
                 onFocus={() => setFocused('username')}
                 onBlur={() => setFocused(null)}
                 required
@@ -281,18 +307,36 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          {/* Password */}
-          <div className="input-group">
+          <div className="mb-4">
+            <div className={`input-field ${focused === 'phone' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
+              <Phone size={18} className="icon" />
+              <input
+                type="tel"
+                placeholder="Phone Number (10 digits only)"
+                maxLength="10"
+                value={formData.phone}
+                onChange={(e) => {
+                  // Only allow numbers
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value.length <= 10) {
+                    setFormData({ ...formData, phone: value });
+                  }
+                }}
+                onFocus={() => setFocused('phone')}
+                onBlur={() => setFocused(null)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="mb-2">
             <div className={`input-field ${focused === 'password' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Lock size={18} className="icon" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a password"
+                placeholder="Create a password (min 7 chars)"
                 value={formData.password}
-                onChange={(e) => {
-                  setFormData({ ...formData, password: e.target.value });
-                  checkPasswordStrength(e.target.value);
-                }}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 onFocus={() => setFocused('password')}
                 onBlur={() => setFocused(null)}
                 required
@@ -301,28 +345,16 @@ const RegisterPage = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-
-            {formData.password.length > 0 && (
-              <div className="slide-up">
-                <div className="strength-bar">
-                  <div className="fill" style={{ width: strengthWidths[passwordStrength] || '0%', backgroundColor: strengthColors[passwordStrength] || '#EDE2CE' }} />
-                </div>
-                <div className="flex justify-between text-[10px] mt-1">
-                  <span className="text-[#8A7F6B]">Strength:</span>
-                  <span style={{ color: strengthColors[passwordStrength] || '#8A7F6B' }} className="font-medium">
-                    {strengthLabels[passwordStrength] || 'Weak'}
-                  </span>
-                </div>
-              </div>
-            )}
+            <div className="password-hint">
+              Must include: uppercase, lowercase, number, and special character (@$!%*?&)
+            </div>
           </div>
 
-          {/* Confirm Password */}
-          <div className="input-group">
+          <div className="mb-4">
             <div className={`input-field ${focused === 'confirmPassword' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Lock size={18} className="icon" />
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -330,70 +362,53 @@ const RegisterPage = () => {
                 onBlur={() => setFocused(null)}
                 required
               />
-              {formData.confirmPassword && formData.confirmPassword === formData.password && (
-                <CheckCircle size={18} className="check-icon" />
-              )}
+              <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="toggle-btn">
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
-          {/* Terms */}
-          <div className="mb-6 mt-2">
-            <label className="flex items-start gap-2.5 text-sm text-[#5B6478] cursor-pointer select-none group">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                required
-                className="h-4 w-4 mt-0.5 rounded border-[#D9C7A3] accent-[#D8472F] cursor-pointer transition-all duration-200"
-              />
-              <span className="group-hover:text-[#1E2A42] transition leading-relaxed">
-                I agree to the <span className="text-[#D8472F] font-medium hover:underline">Terms of Service</span> and <span className="text-[#D8472F] font-medium hover:underline">Privacy Policy</span>
-              </span>
+          {/* Terms & Conditions */}
+          <div className="flex items-start gap-2 mb-6">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              className="h-4 w-4 rounded border-[#D9C7A3] accent-[#D8472F] cursor-pointer transition-all duration-200 mt-1 shrink-0"
+            />
+            <label className="text-sm text-[#5B6478] cursor-pointer select-none">
+              I agree to the{' '}
+              <Link to="/terms" className="text-[#D8472F] hover:underline font-medium">Terms of Service</Link>
+              {' '}and{' '}
+              <Link to="/privacy" className="text-[#D8472F] hover:underline font-medium">Privacy Policy</Link>
             </label>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="seal-btn w-full btn-submit bg-[#D8472F] text-[#FFFBF3] font-semibold shadow-[0_12px_28px_-10px_rgba(216,71,47,0.5)] hover:bg-[#B23522] hover:shadow-[0_16px_32px_-12px_rgba(216,71,47,0.6)] transition-all duration-300 flex items-center justify-center gap-2 group"
           >
-            <span>{userType === 'seller' ? 'Continue as Seller' : 'Create Account'}</span>
+            <span>Create Account</span>
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
           </button>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
-            <div className="divider-line" />
-            <span className="text-xs text-[#5B6478] font-medium whitespace-nowrap">or continue with</span>
-            <div className="divider-line" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D9C7A3]" />
+            <span className="text-xs text-[#5B6478] font-medium whitespace-nowrap">or</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D9C7A3]" />
           </div>
-
-          {/* Social Buttons */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {[
-              { label: 'G', name: 'Google', color: 'text-[#EA4335]' },
-              { label: 'f', name: 'Facebook', color: 'text-[#1877F2]' },
-              { label: '', name: 'Apple', color: 'text-[#1E2A42]' },
-            ].map((s) => (
-              <button
-                key={s.name}
-                type="button"
-                className={`social-btn flex items-center justify-center text-[#1E2A42] font-display font-semibold text-lg ${s.color}`}
-                aria-label={`Continue with ${s.name}`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Login Link */}
+      
           <p className="text-center text-sm text-[#5B6478]">
             Already have an account?{' '}
             <Link to="/login" className="text-[#D8472F] font-semibold hover:underline hover:text-[#B23522] transition">
-              Login Now
+              Sign In
             </Link>
           </p>
         </form>
+
+        <p className="font-quote italic text-center text-sm text-[#5B6478]/60 mt-6 leading-relaxed">
+          "{quote.text}" <span className="not-italic text-xs text-[#8A7F6B]">— {quote.author}</span>
+        </p>
       </div>
     </div>
   );

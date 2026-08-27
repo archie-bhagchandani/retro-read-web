@@ -6,7 +6,10 @@ const quote = { text: "Books are a uniquely portable magic.", author: "Stephen K
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ 
+    email: '', 
+    password: '' 
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -15,32 +18,51 @@ const LoginPage = () => {
 
   React.useEffect(() => { setMounted(true); }, []);
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // Minimum 7 characters, at least one uppercase, one lowercase, one number, one special character
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = (e) => {
-    e.preventDefault(); // ✅ THIS PREVENTS PAGE REFRESH
-    
-    // ✅ Validate fields
+    e.preventDefault();
+    setError('');
+
     if (!formData.email.trim()) {
-      setError('Please enter your email or username');
+      setError('Please enter your email address');
       return;
     }
-    if (!formData.password.trim()) {
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address (e.g., name@example.com)');
+      return;
+    }
+
+    if (!formData.password) {
       setError('Please enter your password');
       return;
     }
-    
+    if (!validatePassword(formData.password)) {
+      setError('Password must be at least 7 characters and include: uppercase, lowercase, number, and special character (@$!%*?&)');
+      return;
+    }
+
     setError('');
+
     
-    // ✅ Save to localStorage
     localStorage.setItem('token', 'dummy-token-' + Date.now());
     localStorage.setItem('userRole', 'user');
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('userEmail', formData.email);
     
-    console.log('✅ Login Successful!');
-    console.log('📧 Email:', formData.email);
-    console.log('🔑 Token:', localStorage.getItem('token'));
+    console.log(' Login Successful!');
+    console.log(' Email:', formData.email);
+    console.log(' Token:', localStorage.getItem('token'));
     
-    // ✅ Navigate to dashboard
     navigate('/dashboard');
   };
 
@@ -59,12 +81,6 @@ const LoginPage = () => {
         .seal-btn { position: relative; overflow: hidden; cursor: pointer; }
         .seal-btn::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent); transform: translateX(-120%) skewX(-15deg); transition: transform 0.6s ease; }
         .seal-btn:hover::after { animation: shimmer-sweep 0.9s ease forwards; }
-
-        @keyframes slide-up { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
-        .slide-up { animation: slide-up 0.5s ease forwards; opacity: 0; }
-
-        .input-group { margin-bottom: 20px; }
-        .input-group:last-of-type { margin-bottom: 24px; }
 
         .input-field {
           display: flex;
@@ -112,21 +128,6 @@ const LoginPage = () => {
         }
         .input-field .toggle-btn:hover { color: #D8472F; }
 
-        .social-btn {
-          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-          background: rgba(255,255,255,0.4);
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(255,255,255,0.5);
-          height: 46px;
-          border-radius: 14px;
-        }
-        .social-btn:hover {
-          transform: translateY(-3px) scale(1.02);
-          background: rgba(255,255,255,0.7);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-        }
-        .social-btn:active { transform: scale(0.96); }
-
         .glass-card {
           background: rgba(255,251,243,0.78);
           backdrop-filter: blur(24px);
@@ -137,7 +138,6 @@ const LoginPage = () => {
           width: 100%;
         }
 
-        .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, rgba(217,199,163,0.4), transparent); }
         .btn-submit { height: 52px; border-radius: 14px; font-size: 15px; font-weight: 600; margin-top: 8px; }
         
         .error-message {
@@ -149,6 +149,13 @@ const LoginPage = () => {
           font-size: 13px;
           margin-bottom: 12px;
         }
+
+        .password-hint {
+          font-size: 11px;
+          color: #8A7F6B;
+          padding: 4px 14px;
+          margin-top: 4px;
+        }
       `}</style>
 
       <img
@@ -158,8 +165,9 @@ const LoginPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#F6EFE3]/60 via-[#F6EFE3]/40 to-[#3A2A18]/50" />
 
+    
       <div className={`glass-card p-8 md:p-10 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        {/* Logo */}
+      
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-[#D8472F]/20 blur-xl animate-pulse" />
@@ -177,20 +185,19 @@ const LoginPage = () => {
         <p className="text-[#5B6478] text-sm mt-1.5 mb-7 text-center">Login to continue your reading journey.</p>
 
         <form onSubmit={handleSubmit}>
-          {/* ✅ Error Message */}
+          
           {error && (
             <div className="error-message">
               ⚠️ {error}
             </div>
           )}
 
-          {/* Email Input */}
-          <div className="form-group">
+          <div className="mb-4">
             <div className={`input-field ${focused === 'email' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Mail size={18} className="icon" />
               <input
-                type="text"
-                placeholder="Email or username"
+                type="email"
+                placeholder="Email Address"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 onFocus={() => setFocused('email')}
@@ -200,8 +207,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Password Input */}
-          <div className="form-group">
+          <div className="mb-2">
             <div className={`input-field ${focused === 'password' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Lock size={18} className="icon" />
               <input
@@ -217,9 +223,11 @@ const LoginPage = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <div className="password-hint">
+              Min 7 chars: uppercase, lowercase, number, special (@$!%*?&)
+            </div>
           </div>
 
-          {/* Remember & Forgot */}
           <div className="flex items-center justify-between text-sm px-1 mt-2 mb-6">
             <label className="flex items-center gap-2 text-[#5B6478] cursor-pointer select-none group">
               <input
@@ -235,7 +243,6 @@ const LoginPage = () => {
             </Link>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="seal-btn w-full btn-submit bg-[#D8472F] text-[#FFFBF3] font-semibold shadow-[0_12px_28px_-10px_rgba(216,71,47,0.5)] hover:bg-[#B23522] hover:shadow-[0_16px_32px_-12px_rgba(216,71,47,0.6)] transition-all duration-300 flex items-center justify-center gap-2 group"
@@ -244,32 +251,12 @@ const LoginPage = () => {
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
           </button>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
-            <div className="divider-line" />
-            <span className="text-xs text-[#5B6478] font-medium whitespace-nowrap">or continue with</span>
-            <div className="divider-line" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D9C7A3]" />
+            <span className="text-xs text-[#5B6478] font-medium whitespace-nowrap">or</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D9C7A3]" />
           </div>
 
-          {/* Social Buttons */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {[
-              { label: 'G', name: 'Google', color: 'text-[#EA4335]' },
-              { label: 'f', name: 'Facebook', color: 'text-[#1877F2]' },
-              { label: '', name: 'Apple', color: 'text-[#1E2A42]' },
-            ].map((s) => (
-              <button
-                key={s.name}
-                type="button"
-                className={`social-btn flex items-center justify-center text-[#1E2A42] font-display font-semibold text-lg ${s.color}`}
-                aria-label={`Continue with ${s.name}`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Register Link */}
           <p className="text-center text-sm text-[#5B6478]">
             Don't have an account?{' '}
             <Link to="/register" className="text-[#D8472F] font-semibold hover:underline hover:text-[#B23522] transition">
@@ -278,6 +265,7 @@ const LoginPage = () => {
           </p>
         </form>
 
+        {/* Quote */}
         <p className="font-quote italic text-center text-sm text-[#5B6478]/60 mt-6 leading-relaxed">
           "{quote.text}" <span className="not-italic text-xs text-[#8A7F6B]">— {quote.author}</span>
         </p>

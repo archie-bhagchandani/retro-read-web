@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
-// Import Components
 import Navbar from './Components/Common/Navbar';
 import Footer from './Components/Common/Footer';
 
-// Import Pages
 import HomePage from './Components/Pages/HomePage';
 import LoginPage from './Components/Pages/LoginPage';
 import RegisterPage from './Components/Pages/RegisterPage';
@@ -22,8 +20,11 @@ import UserLoginPage from './Components/Pages/UserLoginPage';
 import SellerSignupPage from './Components/Pages/SellerSignupPage';
 import ClaimBookPage from './Components/Pages/ClaimBookPage';
 import SellBookPage from './Components/Pages/SellBookPage';
+import HelpCenter from './Components/Pages/HelpCenter';
+import FAQPage from './Components/Pages/FAQPage';
+import ContactPage from './Components/Pages/ContactPage';
+import PrivacyPolicy from './Components/Pages/PrivacyPolicy';
 
-// Gamification Pages
 import GamificationPage from './Components/Pages/GamificationPage';
 import BadgesPage from './Components/Pages/BadgesPage';
 import KoinsPage from './Components/Pages/KoinsPage';
@@ -64,15 +65,18 @@ function App() {
       <Navbar />
       <main className="main-content">
         <Routes>
-          {/* ===== PUBLIC ROUTES ===== */}
+          
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/seller-login" element={<SellerLoginPage />} />
           <Route path="/user-login" element={<UserLoginPage />} />
           <Route path="/seller-signup" element={<SellerSignupPage />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
-          {/* ===== PROTECTED ROUTES ===== */}
           <Route path="/library" element={
             <ProtectedRoute><LibraryPage /></ProtectedRoute>
           } />
@@ -82,7 +86,7 @@ function App() {
           <Route path="/claim-book" element={
             <ProtectedRoute><ClaimBookPage /></ProtectedRoute>
           } />
-          {/* ✅ SellBookPage - No role required, any logged-in user can access */}
+          
           <Route path="/sell-book" element={
             <ProtectedRoute><SellBookPage /></ProtectedRoute>
           } />
@@ -102,7 +106,6 @@ function App() {
             <ProtectedRoute><BookDetailsPage /></ProtectedRoute>
           } />
           
-          {/* ===== GAMIFICATION ROUTES ===== */}
           <Route path="/gamification" element={
             <ProtectedRoute><GamificationPage /></ProtectedRoute>
           } />
@@ -127,8 +130,7 @@ function App() {
           <Route path="/gamification/progress" element={
             <ProtectedRoute><ProgressPage /></ProtectedRoute>
           } />
-          
-          {/* ===== 404 ===== */}
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

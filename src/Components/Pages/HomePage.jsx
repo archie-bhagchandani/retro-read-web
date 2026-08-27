@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Sparkles, BookOpen, Users, Feather, Flame, Target, Library, Search, X } from "lucide-react";
+import { Sparkles, BookOpen, Users, Feather, Flame, Target, Library, Search, X, Loader2 } from "lucide-react";
 import ChatPanel from "../ChatPanel";
-import { searchBooks, getTrendingBooks } from '../lib/googleBooks.js';
+import { searchBooks } from '../lib/googleBooks';
 
 const bookQuotes = [
   { text: "A reader lives a thousand lives before he dies.", author: "George R. R. Martin" },
@@ -43,14 +43,19 @@ const shelfRowA = [
   { title: "Educated", cover: "https://covers.openlibrary.org/b/isbn/9780399590504-L.jpg" },
   { title: "The Silent Patient", cover: "https://covers.openlibrary.org/b/isbn/9781250301697-L.jpg" },
   { title: "Fourth Wing", cover: "https://covers.openlibrary.org/b/isbn/9781649374042-L.jpg" },
+  { title: "Dune", cover: "https://covers.openlibrary.org/b/isbn/9780441013593-L.jpg" },
+  { title: "The Hobbit", cover: "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg" },
 ];
+
 const shelfRowB = [
   { title: "Deep Work", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYoNbwM6uYYhX5mzJvJNf3zcVh5n1uN8ou0VUFGbFi-A&s" },
   { title: "Thinking, Fast and Slow", cover: "https://m.media-amazon.com/images/I/41iJ8QmVs2L._SY445_SX342_FMwebp_.jpg" },
-  { title: "The Hobbit", cover: "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg" },
-  { title: "Dune", cover: "https://covers.openlibrary.org/b/isbn/9780441013593-L.jpg" },
   { title: "Klara and the Sun", cover: "https://covers.openlibrary.org/b/isbn/9780571364879-L.jpg" },
   { title: "The Night Circus", cover: "https://covers.openlibrary.org/b/isbn/9780307744432-L.jpg" },
+  { title: "It Ends With Us", cover: "https://covers.openlibrary.org/b/isbn/9781501110368-L.jpg" },
+  { title: "Project Hail Mary", cover: "https://covers.openlibrary.org/b/isbn/9780593135204-L.jpg" },
+  { title: "Sapiens", cover: "https://covers.openlibrary.org/b/isbn/9780062316097-L.jpg" },
+  { title: "The Alchemist", cover: "https://covers.openlibrary.org/b/isbn/9780062315007-L.jpg" },
 ];
 
 const stats = [
@@ -105,6 +110,63 @@ function BookCard({ b, size = "normal", onClick }) {
   );
 }
 
+function FullScreenReader({ book, onClose }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const previewLink = book?.previewLink || book?.infoLink || '';
+  
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const handleIframeLoad = () => setLoading(false);
+  const handleIframeError = () => { setLoading(false); setError(true); };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-[#0a0a1a] flex flex-col">
+      <div className="flex items-center justify-between px-6 py-4 bg-[#1a1a2e] border-b border-[#2a2a4e]">
+        <div className="flex items-center gap-4 min-w-0">
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10">
+            <X size={24} />
+          </button>
+          <div className="min-w-0">
+            <h2 className="text-white font-display font-semibold text-lg truncate">{book.title || 'Book'}</h2>
+            <p className="text-[#8A7F6B] text-sm truncate">{book.author || 'Unknown author'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[#8A7F6B] text-xs hidden sm:inline">Press ESC to close</span>
+          <button onClick={onClose} className="px-4 py-2 bg-[#D8472F] hover:bg-[#B23522] text-white rounded-full text-sm font-medium transition">
+            Close
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 relative bg-[#0a0a1a] overflow-hidden">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
+            <Loader2 size={48} className="text-[#D4A017] animate-spin" />
+            <p className="text-[#8A7F6B] text-sm">Loading book preview...</p>
+          </div>
+        )}
+        {error ? (
+          <div className="absolute inset-0 flex items-center justify-center flex-col gap-4 p-8 text-center">
+            <BookOpen size={64} className="text-[#D8472F]/50" />
+            <h3 className="text-white text-xl font-display">Preview not available</h3>
+            <p className="text-[#8A7F6B] max-w-md">This book doesn't have a preview. Try searching for it on Google Books.</p>
+            <a href={previewLink} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-[#D4A017] text-[#1a0f0a] rounded-full font-semibold hover:bg-[#F0C572] transition">
+              Open on Google Books
+            </a>
+          </div>
+        ) : (
+          <iframe src={previewLink} className="w-full h-full border-0" allowFullScreen onLoad={handleIframeLoad} onError={handleIframeError} title={`Preview of ${book.title}`} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
@@ -112,11 +174,12 @@ export default function HomePage() {
   const [apiBooks, setApiBooks] = useState([]);
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [readerBook, setReaderBook] = useState(null);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -175,15 +238,31 @@ export default function HomePage() {
     try {
       const result = await searchBooks(`${title} ${author}`.trim(), 1);
       const book = result.items?.[0];
-      const link = book?.volumeInfo?.previewLink || book?.volumeInfo?.infoLink;
-      if (link) {
-        window.open(link, "_blank", "noopener,noreferrer");
-      } else {
-        alert("Couldn't find this book online. Try another title.");
+      const volumeInfo = book?.volumeInfo || {};
+      let previewLink = volumeInfo.previewLink || volumeInfo.infoLink || '';
+      if (!previewLink) {
+        previewLink = `https://books.google.com/books?q=${encodeURIComponent(title + ' ' + author)}`;
       }
+      setReaderBook({
+        title: volumeInfo.title || title,
+        author: volumeInfo.authors?.join(', ') || author || 'Unknown author',
+        previewLink: previewLink,
+        infoLink: volumeInfo.infoLink || previewLink,
+      });
+      setIsReaderOpen(true);
     } catch {
-      alert("Something went wrong opening this book.");
+      setReaderBook({
+        title: title,
+        author: author || 'Unknown author',
+        previewLink: `https://books.google.com/books?q=${encodeURIComponent(title + ' ' + author)}`,
+      });
+      setIsReaderOpen(true);
     }
+  }
+
+  function closeReader() {
+    setIsReaderOpen(false);
+    setReaderBook(null);
   }
 
   const activeQuote = bookQuotes[quoteIndex];
@@ -205,13 +284,20 @@ export default function HomePage() {
 
       <div className="pointer-events-none fixed inset-0 z-0 paper-grain opacity-60" />
 
-      <main className="font-body relative z-10 max-w-7xl mx-auto px-6 md:px-10 py-16 space-y-28">
-        {/* HERO */}
+      {isReaderOpen && readerBook && (
+        <FullScreenReader book={readerBook} onClose={closeReader} />
+      )}
+
+      {/* ✅ FULL-WIDTH MAIN CONTAINER - NO MAX-WIDTH, FULL WIDTH */}
+      <main className="font-body relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-16 space-y-28">
+        
+        {/* HERO SECTION */}
         <section
-          className={`grid md:grid-cols-2 gap-12 items-center transition-all duration-1000 ease-out ${
+          className={`grid lg:grid-cols-2 gap-12 items-center transition-all duration-1000 ease-out ${
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
+          {/* LEFT COLUMN */}
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E2D5BC] bg-[#FFFBF3] px-3 py-1 text-[10px] tracking-wide text-[#5B6478] mb-6 whitespace-nowrap">
               <Feather size={11} className="text-[#D8472F]" />
@@ -229,6 +315,7 @@ export default function HomePage() {
               </p>
             </div>
 
+            {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative mb-3">
               <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#FFFBF3] rounded-full border border-[#E2D5BC] focus-within:border-[#D8472F] transition-colors">
                 <Search size={15} className="text-[#8A7F6B] shrink-0" />
@@ -249,6 +336,7 @@ export default function HomePage() {
               </div>
             </form>
 
+            {/* Search Results */}
             {showResults && (
               <div className="bg-[#FFFBF3] border border-[#E2D5BC] rounded-xl p-3 max-h-56 overflow-y-auto space-y-2">
                 {searching && <p className="text-xs text-[#8A7F6B]">Searching...</p>}
@@ -259,8 +347,8 @@ export default function HomePage() {
                   <div
                     key={item.id}
                     onClick={() => {
-                      const link = item.volumeInfo?.previewLink || item.volumeInfo?.infoLink;
-                      if (link) window.open(link, "_blank", "noopener,noreferrer");
+                      const vol = item.volumeInfo || {};
+                      openBook(vol.title, vol.authors?.join(', '));
                     }}
                     className="flex items-center gap-2.5 cursor-pointer hover:bg-[#F6EFE3] rounded-lg p-1 -m-1 transition-colors"
                   >
@@ -280,6 +368,7 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* API Status */}
             <div className="text-xs mt-2">
               {apiLoading && <span className="text-[#8A7F6B]">⏳ Loading books...</span>}
               {apiError && <span className="text-[#D8472F]">⚠️ {apiError}</span>}
@@ -289,10 +378,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* RIGHT: shelf, now clickable */}
-          <div className={`relative transition-all duration-1000 delay-200 ease-out flex justify-end ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
+          {/* RIGHT COLUMN - Bookshelf */}
+          <div className={`relative transition-all duration-1000 delay-200 ease-out flex justify-center lg:justify-end ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
             <div
-              className="relative rounded-2xl border border-[#3A2A18] p-6 md:p-7 w-full max-w-[620px] shelf-flicker"
+              className="relative rounded-2xl border border-[#3A2A18] p-6 md:p-7 w-full max-w-[720px] shelf-flicker"
               style={{
                 background: "linear-gradient(180deg, #4A3423 0%, #2E2013 60%, #1E150C 100%)",
                 boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.2), 0 20px 40px -20px rgba(30,42,66,0.45)",
@@ -300,12 +389,12 @@ export default function HomePage() {
             >
               {[shelfRowA, shelfRowB].map((row, ri) => (
                 <div key={ri} className={ri > 0 ? "mt-5" : ""}>
-                  <div className="flex justify-center gap-2.5">
+                  <div className="flex justify-center gap-2.5 flex-wrap">
                     {row.map((book) => (
                       <div
                         key={book.title}
                         onClick={() => openBook(book.title)}
-                        className="group relative w-12 md:w-[3.4rem] h-20 md:h-24 rounded-sm overflow-hidden shadow-[0_8px_16px_-6px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:-translate-y-1.5 cursor-pointer"
+                        className="group relative w-14 md:w-[3.8rem] h-24 md:h-28 rounded-sm overflow-hidden shadow-[0_8px_16px_-6px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:-translate-y-1.5 cursor-pointer"
                       >
                         <img src={book.cover} alt={book.title} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -322,7 +411,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* STARTING STRIP */}
+        {/* STATS STRIP */}
         <section className={`transition-all duration-1000 delay-200 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
           <div className="relative grid grid-cols-1 md:grid-cols-2 items-center rounded-2xl border border-[#E2D5BC] bg-[#FFFBF3] w-full px-6 md:px-10 py-6 md:py-7">
             <div className="flex items-center justify-center pb-4 md:pb-0 md:pr-6 border-b md:border-b-0 border-dashed border-[#D9C7A3]">
@@ -347,105 +436,45 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* TRENDING / RECENTLY ADDED / FOR YOU */}
+        {/* BOOK SECTIONS - Trending, Recently Added, For You */}
         <div className="space-y-24">
+          {/* Trending Section */}
           <section className={`transition-all duration-1000 delay-300 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
             <SectionEyebrow icon={Sparkles}>What everyone's reading</SectionEyebrow>
             <div className="flex items-end justify-between mb-6">
               <h2 className="font-display font-semibold text-lg md:text-xl tracking-tight text-[#1E2A42]">Trending Now</h2>
-              <span className="font-body text-xs text-[#D8472F] cursor-pointer hover:underline mb-1">View all</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 md:gap-x-6 gap-y-10">
               {trending.map((b) => <BookCard key={b.title} b={b} onClick={() => openBook(b.title, b.author)} />)}
             </div>
           </section>
 
+          {/* Recently Added Section */}
           <section className={`transition-all duration-1000 delay-400 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
             <SectionEyebrow icon={Library}>Fresh on the shelf</SectionEyebrow>
             <div className="flex items-end justify-between mb-6">
               <h2 className="font-display font-semibold text-lg md:text-xl tracking-tight text-[#1E2A42]">Recently Added</h2>
-              <span className="font-body text-xs text-[#D8472F] cursor-pointer hover:underline mb-1">View all</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 md:gap-x-6 gap-y-10">
               {recentlyAdded.map((b) => <BookCard key={b.title} b={b} onClick={() => openBook(b.title, b.author)} />)}
             </div>
           </section>
 
+          {/* For You Section */}
           <section className={`transition-all duration-1000 delay-500 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
             <SectionEyebrow icon={BookOpen}>Tuned to your shelf</SectionEyebrow>
             <div className="flex items-end justify-between mb-6">
               <h2 className="font-display font-semibold text-lg md:text-xl tracking-tight text-[#1E2A42]">For You</h2>
               <span className="font-body text-[11px] text-[#8A7F6B]">AI picks, tuned to your shelf</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 md:gap-x-6 gap-y-10">
               {forYou.map((b) => <BookCard key={b.title} b={b} size="small" onClick={() => openBook(b.title, b.author)} />)}
             </div>
           </section>
         </div>
-
-        {/* READING PROGRESS + DAILY GOAL + DAILY STREAK */}
-        <section className={`transition-all duration-1000 delay-700 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="rounded-2xl border border-[#E2D5BC] bg-[#FFFBF3] p-6 flex items-center gap-5 shadow-[0_8px_20px_-14px_rgba(30,42,66,0.3)]">
-              <div className="relative h-16 w-16 shrink-0">
-                <svg className="h-16 w-16 -rotate-90" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="#EDE2CE" strokeWidth="8" />
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="url(#grad)" strokeWidth="8" strokeLinecap="round" strokeDasharray={2 * Math.PI * 34} strokeDashoffset={2 * Math.PI * 34 * (1 - 0.68)} className="transition-all duration-1000 ease-out" />
-                  <defs>
-                    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#E88A6E" />
-                      <stop offset="100%" stopColor="#D8472F" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center font-display text-xs font-semibold text-[#1E2A42]">68%</span>
-              </div>
-              <div className="flex-1">
-                <p className="font-body text-sm font-semibold text-[#1E2A42]">Atomic Habits</p>
-                <p className="font-body text-xs text-[#8A7F6B]">James Clear</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#E2D5BC] bg-[#FFFBF3] p-6 shadow-[0_8px_20px_-14px_rgba(30,42,66,0.3)]">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D8472F]/10 border border-[#D8472F]/30">
-                  <Flame size={17} className="text-[#D8472F]" />
-                </div>
-                <div>
-                  <p className="font-body text-sm font-semibold text-[#1E2A42] leading-tight">12 Day Streak</p>
-                  <p className="font-body text-xs text-[#8A7F6B]">Read today to keep it alive</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-1.5">
-                {streakDays.map((active, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-semibold transition-colors ${active ? "bg-[#D8472F] text-[#FFFBF3] shadow-sm" : "bg-[#EDE2CE] text-[#8A7F6B] border border-[#D9C7A3]"}`}>
-                      {active && <Flame size={11} />}
-                    </div>
-                    <span className="text-[9px] text-[#8A7F6B]">{streakDayLabels[i]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#E2D5BC] bg-[#FFFBF3] p-6 shadow-[0_8px_20px_-14px_rgba(30,42,66,0.3)]">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#A9812F]/10 border border-[#A9812F]/30">
-                  <Target size={17} className="text-[#A9812F]" />
-                </div>
-                <div>
-                  <p className="font-body text-sm font-semibold text-[#1E2A42] leading-tight">Daily Goal</p>
-                  <p className="font-body text-xs text-[#8A7F6B]">18 of 30 pages today</p>
-                </div>
-              </div>
-              <div className="h-2 rounded-full bg-[#EDE2CE] overflow-hidden">
-                <div className="h-full rounded-full bg-[#A9812F] transition-all duration-1000 ease-out" style={{ width: "60%" }} />
-              </div>
-              <p className="mt-2.5 font-body text-[10px] text-[#8A7F6B]">12 pages to go — you've got this.</p>
-            </div>
-          </div>
-        </section>
+      
       </main>
+      
       <ChatPanel />
     </div>
   );
