@@ -32,7 +32,7 @@ const BookDetailsPage = () => {
     return (
       <div className="min-h-screen bg-[#F6EFE3] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl animate-pulse">📖</div>
+          <div className="text-4xl animate-pulse">Loading</div>
           <p className="text-gray-500 mt-3">Loading book details...</p>
         </div>
       </div>
@@ -43,10 +43,9 @@ const BookDetailsPage = () => {
     return (
       <div className="min-h-screen bg-[#F6EFE3] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl">📚</div>
           <p className="text-gray-500 mt-3">{error || 'Book not found'}</p>
           <Link to="/search" className="text-[#D8472F] hover:underline mt-4 inline-block">
-            ← Back to Search
+            Back to Search
           </Link>
         </div>
       </div>
@@ -60,22 +59,22 @@ const BookDetailsPage = () => {
     <div className="min-h-screen bg-[#F6EFE3] py-10 px-4">
       <div className="max-w-5xl mx-auto">
         <Link to="/search" className="inline-flex items-center gap-2 text-[#8A7F6B] hover:text-[#D8472F] transition mb-6 text-sm">
-          <span>←</span> Back to Search
+          Back to Search
         </Link>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="flex flex-col md:flex-row">
             <div className="md:w-2/5 p-8 bg-[#FFFBF3] flex items-center justify-center">
               <div className="relative">
-                <img 
-                  src={info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '📚'} 
+                <img
+                  src={info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || ''}
                   alt={info.title}
                   className="w-full max-w-xs rounded-lg shadow-2xl"
-                  onError={(e) => e.target.src = '📚'}
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
                 {info.averageRating && (
                   <div className="absolute -bottom-3 -right-3 bg-[#D8472F] text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
-                    ⭐ {info.averageRating}
+                    {info.averageRating} stars
                   </div>
                 )}
               </div>
@@ -91,9 +90,9 @@ const BookDetailsPage = () => {
               </p>
 
               <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-500">
-                {info.publisher && <span>📚 {info.publisher}</span>}
-                {info.publishedDate && <span>📅 {info.publishedDate}</span>}
-                {info.pageCount && <span>📄 {info.pageCount} pages</span>}
+                {info.publisher && <span>{info.publisher}</span>}
+                {info.publishedDate && <span>{info.publishedDate}</span>}
+                {info.pageCount && <span>{info.pageCount} pages</span>}
               </div>
 
               {info.categories && info.categories.length > 0 && (
@@ -110,68 +109,50 @@ const BookDetailsPage = () => {
                 <h3 className="text-sm font-semibold text-[#8A7F6B] uppercase tracking-wider mb-2">
                   About this book
                 </h3>
-                <div className="prose prose-sm max-h-72 overflow-y-auto text-gray-700 leading-relaxed pr-2">
-                  {description.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-3">{paragraph}</p>
-                  ))}
-                </div>
+                <div
+  className="prose prose-sm max-h-72 overflow-y-auto text-gray-700 leading-relaxed pr-2"
+  dangerouslySetInnerHTML={{ __html: description }}
+/>
               </div>
 
               <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-xs text-green-700">
-                  📖 <strong>Tip:</strong> Check the <strong>"Free Full Books"</strong> section on the Search page for complete books!
+                  Tip: Check the Free Full Books section on the Search page for complete books!
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-[#E2D5BC]">
                 {info.previewLink && (
-                  <a 
-                    href={info.previewLink} 
-                    target="_blank" 
+                  <a
+                    href={info.previewLink}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 bg-[#D8472F] text-white rounded-full hover:bg-[#C0392B] transition hover:shadow-lg flex items-center gap-2 text-sm font-medium"
                   >
-                    📖 Read Preview
+                    Read Preview
                   </a>
                 )}
                 {info.infoLink && (
-                  <a 
-                    href={info.infoLink} 
-                    target="_blank" 
+                  <a
+                    href={info.infoLink}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 border border-[#D8472F] text-[#D8472F] rounded-full hover:bg-[#FFF5F0] transition text-sm font-medium"
                   >
-                    🔗 More Info
+                    More Info
                   </a>
                 )}
-                {!info.previewLink && (
-                  <a 
+                {!info.previewLink && !info.infoLink && (
+                  <a
                     href={`https://books.google.com/books?id=${book.id}`}
-                    target="_blank" 
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 bg-[#D8472F] text-white rounded-full hover:bg-[#C0392B] transition hover:shadow-lg flex items-center gap-2 text-sm font-medium"
                   >
-                    📖 Read on Google Books
+                    Read on Google Books
                   </a>
                 )}
               </div>
-
-              {info.previewLink && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-semibold text-[#8A7F6B] uppercase tracking-wider mb-3">
-                    📖 Book Preview
-                  </h3>
-                  <div className="border rounded-lg overflow-hidden" style={{ height: '500px' }}>
-                    <iframe
-                      src={info.previewLink}
-                      className="w-full h-full"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      title="Book Preview"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

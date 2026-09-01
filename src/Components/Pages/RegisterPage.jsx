@@ -23,7 +23,7 @@ const RegisterPage = () => {
 
   React.useEffect(() => { setMounted(true); }, []);
 
-
+  // ✅ Validation Functions
   const validateFullName = (name) => {
     const nameRegex = /^[A-Za-z\s]+$/;
     return nameRegex.test(name);
@@ -44,9 +44,9 @@ const RegisterPage = () => {
     return phoneRegex.test(phone);
   };
 
+  // ✅ Password Validation - Min 7, Max 12, Uppercase, Lowercase, Number, Special
   const validatePassword = (password) => {
-    // Minimum 7 characters, at least one uppercase, one lowercase, one number, one special character
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,12}$/;
     return passwordRegex.test(password);
   };
 
@@ -54,7 +54,7 @@ const RegisterPage = () => {
     e.preventDefault();
     setError('');
 
-   
+    // Full Name Validation - Only Letters
     if (!formData.fullName.trim()) {
       setError('Please enter your full name');
       return;
@@ -64,6 +64,7 @@ const RegisterPage = () => {
       return;
     }
 
+    // Email Validation
     if (!formData.email.trim()) {
       setError('Please enter your email address');
       return;
@@ -73,6 +74,7 @@ const RegisterPage = () => {
       return;
     }
 
+    // Username Validation
     if (!formData.username.trim()) {
       setError('Please enter a username');
       return;
@@ -82,6 +84,7 @@ const RegisterPage = () => {
       return;
     }
 
+    // Phone Validation - Exactly 10 digits
     if (!formData.phone.trim()) {
       setError('Please enter your phone number');
       return;
@@ -91,20 +94,23 @@ const RegisterPage = () => {
       return;
     }
 
+    // Password Validation - Min 7, Max 12
     if (!formData.password) {
       setError('Please create a password');
       return;
     }
     if (!validatePassword(formData.password)) {
-      setError('Password must be at least 7 characters and include: one uppercase, one lowercase, one number, and one special character (@$!%*?&)');
+      setError('Password must be 7-12 characters and include: uppercase, lowercase, number, and special character (@$!%*?&)');
       return;
     }
 
+    // Confirm Password
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
+    // Agree to Terms
     if (!agree) {
       setError('Please agree to the Terms of Service and Privacy Policy');
       return;
@@ -112,6 +118,7 @@ const RegisterPage = () => {
 
     setError('');
 
+    // Store user data
     localStorage.setItem('token', 'dummy-token-' + Date.now());
     localStorage.setItem('userRole', 'user');
     localStorage.setItem('isAuthenticated', 'true');
@@ -125,7 +132,7 @@ const RegisterPage = () => {
     console.log('👤 Username:', formData.username);
     console.log('📱 Phone:', formData.phone);
     
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   return (
@@ -227,7 +234,6 @@ const RegisterPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#F6EFE3]/60 via-[#F6EFE3]/40 to-[#3A2A18]/50" />
 
-      {/* Register Card */}
       <div className={`glass-card p-8 md:p-10 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Logo */}
         <div className="flex flex-col items-center text-center mb-6">
@@ -247,13 +253,13 @@ const RegisterPage = () => {
         <p className="text-[#5B6478] text-sm mt-1.5 mb-6 text-center">Choose your role and start your journey.</p>
 
         <form onSubmit={handleSubmit}>
-          {/* Error Message */}
           {error && (
             <div className="error-message">
-               {error}
+              ⚠️ {error}
             </div>
           )}
 
+          {/* Full Name - Only Letters */}
           <div className="mb-4">
             <div className={`input-field ${focused === 'fullName' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <User size={18} className="icon" />
@@ -262,7 +268,6 @@ const RegisterPage = () => {
                 placeholder="Full Name (Letters only)"
                 value={formData.fullName}
                 onChange={(e) => {
-                  // Only allow letters and spaces
                   const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
                   setFormData({ ...formData, fullName: value });
                 }}
@@ -273,6 +278,7 @@ const RegisterPage = () => {
             </div>
           </div>
 
+          {/* Email */}
           <div className="mb-4">
             <div className={`input-field ${focused === 'email' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Mail size={18} className="icon" />
@@ -288,15 +294,15 @@ const RegisterPage = () => {
             </div>
           </div>
 
+          {/* Username */}
           <div className="mb-4">
             <div className={`input-field ${focused === 'username' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <UserCircle size={18} className="icon" />
               <input
                 type="text"
-                placeholder="Username (3-20 characters, letters/numbers/_)"
+                placeholder="Username (3-20 chars, letters/numbers/_)"
                 value={formData.username}
                 onChange={(e) => {
-                  // Only allow letters, numbers, underscores
                   const value = e.target.value.replace(/[^A-Za-z0-9_]/g, '');
                   setFormData({ ...formData, username: value });
                 }}
@@ -307,6 +313,7 @@ const RegisterPage = () => {
             </div>
           </div>
 
+          {/* Phone Number - Exactly 10 digits */}
           <div className="mb-4">
             <div className={`input-field ${focused === 'phone' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Phone size={18} className="icon" />
@@ -316,7 +323,6 @@ const RegisterPage = () => {
                 maxLength="10"
                 value={formData.phone}
                 onChange={(e) => {
-                  // Only allow numbers
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   if (value.length <= 10) {
                     setFormData({ ...formData, phone: value });
@@ -329,12 +335,13 @@ const RegisterPage = () => {
             </div>
           </div>
 
+          {/* Password */}
           <div className="mb-2">
             <div className={`input-field ${focused === 'password' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Lock size={18} className="icon" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a password (min 7 chars)"
+                placeholder="Password (7-12 chars)"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 onFocus={() => setFocused('password')}
@@ -346,10 +353,11 @@ const RegisterPage = () => {
               </button>
             </div>
             <div className="password-hint">
-              Must include: uppercase, lowercase, number, and special character (@$!%*?&)
+              Min 7, Max 12 chars: uppercase, lowercase, number, special (@$!%*?&)
             </div>
           </div>
 
+          {/* Confirm Password */}
           <div className="mb-4">
             <div className={`input-field ${focused === 'confirmPassword' ? 'ring-2 ring-[#D8472F]/10' : ''}`}>
               <Lock size={18} className="icon" />
@@ -384,6 +392,7 @@ const RegisterPage = () => {
             </label>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             className="seal-btn w-full btn-submit bg-[#D8472F] text-[#FFFBF3] font-semibold shadow-[0_12px_28px_-10px_rgba(216,71,47,0.5)] hover:bg-[#B23522] hover:shadow-[0_16px_32px_-12px_rgba(216,71,47,0.6)] transition-all duration-300 flex items-center justify-center gap-2 group"
@@ -392,12 +401,14 @@ const RegisterPage = () => {
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
           </button>
 
+          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D9C7A3]" />
             <span className="text-xs text-[#5B6478] font-medium whitespace-nowrap">or</span>
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D9C7A3]" />
           </div>
-      
+
+          {/* Login Link */}
           <p className="text-center text-sm text-[#5B6478]">
             Already have an account?{' '}
             <Link to="/login" className="text-[#D8472F] font-semibold hover:underline hover:text-[#B23522] transition">
@@ -406,6 +417,7 @@ const RegisterPage = () => {
           </p>
         </form>
 
+        {/* Quote */}
         <p className="font-quote italic text-center text-sm text-[#5B6478]/60 mt-6 leading-relaxed">
           "{quote.text}" <span className="not-italic text-xs text-[#8A7F6B]">— {quote.author}</span>
         </p>

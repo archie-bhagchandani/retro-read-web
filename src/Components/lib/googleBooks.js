@@ -4,7 +4,11 @@ const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 const BASE_URL = 'https://www.googleapis.com/books/v1';
 
 console.log('🔑 API Key:', API_KEY ? '✅ Loaded' : '❌ Not loaded');
-
+export async function getBookById(id) {
+  const res = await fetch(`https://www.googleapis.com/books/v1/volumes/${id}?key=${API_KEY}`);
+  if (!res.ok) throw new Error('Book not found');
+  return res.json();
+}
 export const searchBooks = async (query, maxResults = 12, startIndex = 0) => {
   if (!API_KEY) {
     console.error('❌ API Key missing!');

@@ -18,14 +18,16 @@ const LoginPage = () => {
 
   React.useEffect(() => { setMounted(true); }, []);
 
+  // ✅ Email Validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
+  // ✅ Password Validation - Min 7, Max 12, Uppercase, Lowercase, Number, Special
   const validatePassword = (password) => {
-    // Minimum 7 characters, at least one uppercase, one lowercase, one number, one special character
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
+    // Must be 7-12 characters, at least one uppercase, one lowercase, one number, one special
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,12}$/;
     return passwordRegex.test(password);
   };
 
@@ -33,6 +35,7 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
 
+    // Validate Email
     if (!formData.email.trim()) {
       setError('Please enter your email address');
       return;
@@ -42,28 +45,29 @@ const LoginPage = () => {
       return;
     }
 
+    // Validate Password
     if (!formData.password) {
       setError('Please enter your password');
       return;
     }
     if (!validatePassword(formData.password)) {
-      setError('Password must be at least 7 characters and include: uppercase, lowercase, number, and special character (@$!%*?&)');
+      setError('Password must be 7-12 characters and include: uppercase, lowercase, number, and special character (@$!%*?&)');
       return;
     }
 
     setError('');
 
-    
+    // Store login data
     localStorage.setItem('token', 'dummy-token-' + Date.now());
     localStorage.setItem('userRole', 'user');
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('userEmail', formData.email);
+    localStorage.setItem('userName', formData.email.split('@')[0]);
     
-    console.log(' Login Successful!');
-    console.log(' Email:', formData.email);
-    console.log(' Token:', localStorage.getItem('token'));
+    console.log('✅ Login Successful!');
+    console.log('📧 Email:', formData.email);
     
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   return (
@@ -165,9 +169,8 @@ const LoginPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#F6EFE3]/60 via-[#F6EFE3]/40 to-[#3A2A18]/50" />
 
-    
       <div className={`glass-card p-8 md:p-10 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-      
+        {/* Logo */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-[#D8472F]/20 blur-xl animate-pulse" />
@@ -185,7 +188,6 @@ const LoginPage = () => {
         <p className="text-[#5B6478] text-sm mt-1.5 mb-7 text-center">Login to continue your reading journey.</p>
 
         <form onSubmit={handleSubmit}>
-          
           {error && (
             <div className="error-message">
               ⚠️ {error}
@@ -212,7 +214,7 @@ const LoginPage = () => {
               <Lock size={18} className="icon" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
+                placeholder="Password (7-12 chars)"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 onFocus={() => setFocused('password')}
@@ -224,7 +226,7 @@ const LoginPage = () => {
               </button>
             </div>
             <div className="password-hint">
-              Min 7 chars: uppercase, lowercase, number, special (@$!%*?&)
+              Min 7, Max 12 chars: uppercase, lowercase, number, special (@$!%*?&)
             </div>
           </div>
 
@@ -265,7 +267,6 @@ const LoginPage = () => {
           </p>
         </form>
 
-        {/* Quote */}
         <p className="font-quote italic text-center text-sm text-[#5B6478]/60 mt-6 leading-relaxed">
           "{quote.text}" <span className="not-italic text-xs text-[#8A7F6B]">— {quote.author}</span>
         </p>
